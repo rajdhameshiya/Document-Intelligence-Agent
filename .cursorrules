@@ -1,0 +1,18 @@
+You are building the Shipmnts Document Intelligence Agent prototype.
+
+RULES:
+1. Always use TypeScript. Never use plain JavaScript.
+2. Always use the exact type definitions from the spec. Never invent new types.
+3. Always use Tailwind CSS for styling. Never write custom CSS except what is specified.
+4. Always use the exact color palette: primary #1E3A5F, accent #E8533A.
+5. Every API endpoint must return { success: boolean, data?: any, error?: { code: string, message: string } }.
+6. Every field write to the TMS must create an audit log entry.
+7. Never take an outbound action (send email, send to shipper) without explicit human approval.
+8. The agent must never silently fail. All errors must surface as exceptions or toasts.
+9. Always handle loading and error states in every page component.
+10. Use the Zustand store for all state. Never use local useState for shared data.
+11. The confidence threshold for auto-populating fields is 90%. Never auto-populate below this.
+12. LOCKED fields (bookingReferenceNumber, containerType, containerCount) must never be auto-overwritten.
+13. All dates must be displayed in DD MMM YYYY format using date-fns.
+14. Reference numbers must always use font-mono class.
+15. Every page must have a loading skeleton state, not just a spinner.

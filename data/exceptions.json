@@ -1,0 +1,73 @@
+[
+  {
+    "id": "exc-001",
+    "shipmentId": "ship-002",
+    "documentId": "doc-002",
+    "type": "missing_mandatory_field",
+    "severity": "high",
+    "status": "open",
+    "fieldName": "hsCode",
+    "description": "Mandatory field \"HS Code\" is missing from Shipping Instruction",
+    "assignedTo": "Rahul Verma",
+    "createdAt": "2024-01-15T10:31:00Z",
+    "slaDeadline": "2026-04-29T18:44:01.692Z"
+  },
+  {
+    "id": "exc-002",
+    "shipmentId": "ship-003",
+    "documentId": "doc-002",
+    "type": "field_conflict",
+    "severity": "critical",
+    "status": "resolved",
+    "fieldName": "consigneeName",
+    "existingValue": "UK Pharma Distributors Limited",
+    "conflictingValue": "UK Pharma Distributors Ltd",
+    "description": "Consignee name on SI conflicts with booking record",
+    "assignedTo": "Priya Sharma",
+    "createdAt": "2024-01-15T11:00:00Z",
+    "slaDeadline": "2026-04-29T16:08:01.693Z",
+    "resolvedAt": "2026-04-29T17:36:47.364Z",
+    "resolvedBy": "Priya Sharma",
+    "resolutionNote": "Resolved with action keep_tms"
+  },
+  {
+    "id": "exc-003",
+    "shipmentId": null,
+    "documentId": "doc-003",
+    "type": "unmatched_document",
+    "severity": "medium",
+    "status": "open",
+    "description": "Document received from unknown sender cannot link to any active shipment",
+    "assignedTo": "Priya Sharma",
+    "createdAt": "2024-01-15T14:21:00Z",
+    "slaDeadline": "2026-04-29T20:44:01.693Z"
+  },
+  {
+    "id": "37b26634-85c6-42ed-93f9-4b0246053a0e",
+    "shipmentId": "ship-001",
+    "documentId": "1c45ff6d-d8b2-4920-aad8-e488040ee43b",
+    "type": "field_conflict",
+    "severity": "critical",
+    "status": "open",
+    "fieldName": "portOfDischarge",
+    "existingValue": "NLRTM",
+    "conflictingValue": "DEHAM",
+    "description": "Field \"portOfDischarge\" conflicts: TMS has \"NLRTM\", document shows \"DEHAM\"",
+    "assignedTo": "Priya Sharma",
+    "createdAt": "2026-04-29T17:34:09.018Z",
+    "slaDeadline": "2026-04-29T19:34:09.018Z"
+  },
+  {
+    "id": "49ae57db-3332-4e9a-b6b6-9deafcd7727f",
+    "shipmentId": "ship-001",
+    "documentId": "1c45ff6d-d8b2-4920-aad8-e488040ee43b",
+    "type": "missing_mandatory_field",
+    "severity": "high",
+    "status": "open",
+    "fieldName": "hsCode",
+    "description": "Mandatory field \"hsCode\" is missing from shipping_instruction",
+    "assignedTo": "Priya Sharma",
+    "createdAt": "2026-04-29T17:34:09.018Z",
+    "slaDeadline": "2026-04-29T21:34:09.018Z"
+  }
+]

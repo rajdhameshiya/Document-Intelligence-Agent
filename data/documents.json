@@ -1,0 +1,327 @@
+[
+  {
+    "id": "doc-001",
+    "shipmentId": "ship-001",
+    "type": "booking_confirmation",
+    "status": "processed",
+    "channel": "email",
+    "fileName": "MAEU-123456-booking-confirmation.pdf",
+    "fileUrl": "/uploads/doc-001.pdf",
+    "senderIdentity": "bookings@maersk.com",
+    "receivedAt": "2024-01-15T09:15:00Z",
+    "processedAt": "2024-01-15T09:16:00Z",
+    "extractedFields": [
+      {
+        "fieldName": "bookingReferenceNumber",
+        "value": "MAEU-123456",
+        "confidence": 99,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "vesselName",
+        "value": "Maersk Elba",
+        "confidence": 97,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "voyageNumber",
+        "value": "401W",
+        "confidence": 95,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfLoading",
+        "value": "INNSA",
+        "confidence": 92,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfDischarge",
+        "value": "NLRTM",
+        "confidence": 94,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "containerType",
+        "value": "40HC",
+        "confidence": 98,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "containerCount",
+        "value": 2,
+        "confidence": 99,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "sailingDate",
+        "value": "2024-01-25",
+        "confidence": 96,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "cutoffDate",
+        "value": "2024-01-22T18:00:00Z",
+        "confidence": 93,
+        "mandatory": true,
+        "status": "extracted"
+      }
+    ],
+    "extractionSummary": {
+      "totalFields": 9,
+      "extractedSuccessfully": 9,
+      "missingMandatory": 0,
+      "lowConfidence": 0,
+      "conflicts": 0
+    },
+    "classificationConfidence": 99,
+    "classificationReasoning": "Booking reference, vessel, voyage and container details were present."
+  },
+  {
+    "id": "doc-002",
+    "shipmentId": "ship-002",
+    "type": "shipping_instruction",
+    "status": "flagged",
+    "channel": "whatsapp",
+    "fileName": "SI_ARV_ZAR_Jan2024.pdf",
+    "fileUrl": "/uploads/doc-002.pdf",
+    "senderIdentity": "+91 98765 43210",
+    "receivedAt": "2024-01-15T10:30:00Z",
+    "processedAt": "2024-01-15T10:31:00Z",
+    "extractedFields": [
+      {
+        "fieldName": "shipperName",
+        "value": "Arvind Textiles Pvt Ltd",
+        "confidence": 97,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "consigneeName",
+        "value": "UK Pharma Distributors Ltd",
+        "confidence": 95,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfLoading",
+        "value": "INNSA",
+        "confidence": 91,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfDischarge",
+        "value": "NLRTM",
+        "confidence": 91,
+        "mandatory": true,
+        "status": "conflict",
+        "conflictValue": "DEHAM"
+      },
+      {
+        "fieldName": "cargoDescription",
+        "value": "100% Cotton Denim Fabric",
+        "confidence": 95,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "hsCode",
+        "value": null,
+        "confidence": 0,
+        "mandatory": true,
+        "status": "missing"
+      },
+      {
+        "fieldName": "grossWeight",
+        "value": 14500,
+        "confidence": 67,
+        "mandatory": true,
+        "status": "low_confidence"
+      },
+      {
+        "fieldName": "packageCount",
+        "value": 240,
+        "confidence": 93,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "freightTerms",
+        "value": "Prepaid",
+        "confidence": 98,
+        "mandatory": true,
+        "status": "extracted"
+      }
+    ],
+    "extractionSummary": {
+      "totalFields": 9,
+      "extractedSuccessfully": 6,
+      "missingMandatory": 1,
+      "lowConfidence": 1,
+      "conflicts": 1
+    },
+    "classificationConfidence": 96,
+    "classificationReasoning": "The document contains shipper instructions and cargo details for BL preparation."
+  },
+  {
+    "id": "doc-003",
+    "shipmentId": null,
+    "type": "unclassified",
+    "status": "flagged",
+    "channel": "whatsapp",
+    "fileName": "document_jan15.pdf",
+    "fileUrl": "/uploads/doc-003.pdf",
+    "senderIdentity": "+91 99887 76655",
+    "receivedAt": "2024-01-15T14:20:00Z",
+    "processedAt": "2024-01-15T14:21:00Z",
+    "extractedFields": [],
+    "extractionSummary": {
+      "totalFields": 0,
+      "extractedSuccessfully": 0,
+      "missingMandatory": 0,
+      "lowConfidence": 0,
+      "conflicts": 0
+    },
+    "classificationConfidence": 42,
+    "classificationReasoning": "Document content did not match any supported freight document type."
+  },
+  {
+    "id": "1c45ff6d-d8b2-4920-aad8-e488040ee43b",
+    "shipmentId": "ship-001",
+    "type": "shipping_instruction",
+    "status": "flagged",
+    "channel": "upload",
+    "fileName": "a22e115cc4b899f22c73f84614171d78cb3de54bd8ffeffdecb3e22f994f22330d38e5e8356ff8988d03b4c6209c1e71fdfe0b6b3c7ff142d5265f62aa3b129771b9dddf5a5c4dfb78bb6b720949e82b148efdd3354e4245d0d21695344bf9f26839248e.pdf",
+    "fileUrl": "/uploads/2d7c8da1-3f6b-497a-a067-087a2954e67e.pdf",
+    "senderIdentity": "ops@shipper.com",
+    "receivedAt": "2026-04-29T17:34:06.007Z",
+    "extractedFields": [
+      {
+        "fieldName": "shipperName",
+        "value": "Arvind Textiles Pvt Ltd",
+        "confidence": 97,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "shipperAddress",
+        "value": "Plot 45, GIDC Industrial Estate, Surat, Gujarat 395010, India",
+        "confidence": 92,
+        "mandatory": false,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "consigneeName",
+        "value": "Zara International BV",
+        "confidence": 94,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "consigneeAddress",
+        "value": "Calle Industria 55, Amsterdam 1012, Netherlands",
+        "confidence": 90,
+        "mandatory": false,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "notifyParty",
+        "value": "Same as Consignee",
+        "confidence": 91,
+        "mandatory": false,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfLoading",
+        "value": "INNSA",
+        "confidence": 91,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "portOfDischarge",
+        "value": "DEHAM",
+        "confidence": 91,
+        "mandatory": true,
+        "status": "conflict",
+        "conflictValue": "NLRTM"
+      },
+      {
+        "fieldName": "cargoDescription",
+        "value": "100% Cotton Denim Fabric",
+        "confidence": 95,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "hsCode",
+        "value": null,
+        "confidence": 0,
+        "mandatory": true,
+        "status": "missing"
+      },
+      {
+        "fieldName": "grossWeight",
+        "value": 14500,
+        "confidence": 68,
+        "mandatory": true,
+        "status": "low_confidence"
+      },
+      {
+        "fieldName": "packageCount",
+        "value": 240,
+        "confidence": 93,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "packageType",
+        "value": "Rolls",
+        "confidence": 92,
+        "mandatory": false,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "freightTerms",
+        "value": "Prepaid",
+        "confidence": 98,
+        "mandatory": true,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "marksAndNumbers",
+        "value": "ARV/ZAR/2024/001-240",
+        "confidence": 90,
+        "mandatory": false,
+        "status": "extracted"
+      },
+      {
+        "fieldName": "specialInstructions",
+        "value": "Handle with care. Keep dry.",
+        "confidence": 90,
+        "mandatory": false,
+        "status": "extracted"
+      }
+    ],
+    "extractionSummary": {
+      "totalFields": 15,
+      "extractedSuccessfully": 12,
+      "missingMandatory": 1,
+      "lowConfidence": 1,
+      "conflicts": 1
+    },
+    "isDuplicate": false,
+    "classificationConfidence": 94,
+    "classificationReasoning": "Shipper instruction and notify party fields found.",
+    "processedAt": "2026-04-29T17:35:38.592Z"
+  }
+]
