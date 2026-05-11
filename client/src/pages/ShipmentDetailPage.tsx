@@ -7,7 +7,7 @@ import { SLACountdown } from '../components/SLACountdown';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAppStore } from '../store/appStore';
 import { BLDraft, FreightException } from '../types';
-import { formatDate, formatFieldName, formatMoney } from '../utils/format';
+import { formatDate, formatFieldName, formatMoney, truncateMiddle } from '../utils/format';
 
 const TABS = ['Overview', 'Documents', 'Exceptions', 'BL Draft', 'Audit Trail'];
 const REVISION_FIELDS = ['consigneeAddress', 'shipperAddress', 'consigneeName', 'shipperName', 'portOfDischarge', 'cargoDescription', 'marksAndNumbers', 'freightTerms'];
@@ -107,7 +107,9 @@ export function ShipmentDetailPage() {
               <div className="flex items-center gap-3">
                 <FileText className="h-4 w-4 text-slate-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{document.fileName}</p>
+                  <p className="max-w-[48ch] truncate text-sm font-medium text-slate-900" title={document.fileName}>
+                    {truncateMiddle(document.fileName, 42)}
+                  </p>
                   <p className="text-xs text-slate-500">{document.type.replace(/_/g, ' ')} | {formatDate(document.receivedAt, true)}</p>
                 </div>
               </div>

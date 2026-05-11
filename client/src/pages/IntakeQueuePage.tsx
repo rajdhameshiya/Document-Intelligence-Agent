@@ -8,7 +8,7 @@ import { Skeleton } from '../components/Skeleton';
 import { StatusBadge } from '../components/StatusBadge';
 import { FreightDocument } from '../types';
 import { cn } from '../utils/cn';
-import { formatDate } from '../utils/format';
+import { formatDate, truncateMiddle } from '../utils/format';
 import { useAppStore } from '../store/appStore';
 
 const DOC_TYPES = ['booking_confirmation', 'shipping_instruction', 'commercial_invoice', 'packing_list', 'unclassified'];
@@ -116,7 +116,9 @@ export function IntakeQueuePage() {
             >
               <input {...getInputProps()} />
               <UploadCloud className="h-8 w-8 text-slate-500" />
-              <p className="mt-2 text-sm font-medium text-slate-900">{file ? file.name : 'Drop PDF, DOCX, JPG or PNG'}</p>
+              <p className="mt-2 max-w-full truncate text-sm font-medium text-slate-900" title={file?.name}>
+                {file ? truncateMiddle(file.name, 42) : 'Drop PDF, DOCX, JPG or PNG'}
+              </p>
               <p className="text-xs text-slate-500">Click to browse</p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -169,8 +171,10 @@ export function IntakeQueuePage() {
                   <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100">
                     <FileText className="h-5 w-5 text-slate-600" />
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{selected.fileName}</h2>
+                  <div className="min-w-0">
+                    <h2 className="max-w-[52ch] truncate text-lg font-semibold text-slate-900" title={selected.fileName}>
+                      {truncateMiddle(selected.fileName, 48)}
+                    </h2>
                     <p className="text-sm text-slate-500">
                       {selected.senderIdentity} | {formatDate(selected.receivedAt, true)}
                     </p>
@@ -285,7 +289,9 @@ function DocumentQueueItem({ document, selected, onSelect }: { document: Freight
         </div>
         <StatusBadge status={document.status} />
       </div>
-      <p className="mt-3 truncate text-sm font-medium text-slate-900">{document.fileName}</p>
+      <p className="mt-3 truncate text-sm font-medium text-slate-900" title={document.fileName}>
+        {truncateMiddle(document.fileName, 34)}
+      </p>
       <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
         <span className="font-mono">{document.shipmentId || 'Unmatched'}</span>
         <span>{formatDate(document.receivedAt, true)}</span>

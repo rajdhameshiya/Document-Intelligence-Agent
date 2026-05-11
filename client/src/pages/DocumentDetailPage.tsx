@@ -6,7 +6,7 @@ import { Skeleton } from '../components/Skeleton';
 import { StatusBadge } from '../components/StatusBadge';
 import { API_URL, useAppStore } from '../store/appStore';
 import { ExtractedField } from '../types';
-import { formatDate } from '../utils/format';
+import { formatDate, truncateMiddle } from '../utils/format';
 
 export function DocumentDetailPage() {
   const { id } = useParams();
@@ -61,7 +61,7 @@ export function DocumentDetailPage() {
             <Link to="/intake" className="hover:text-[#E8533A]">
               Intake
             </Link>{' '}
-            / {document.fileName}
+            / <span title={document.fileName}>{truncateMiddle(document.fileName, 42)}</span>
           </p>
           <h1 className="mt-1 text-2xl font-semibold text-slate-900">Document Extraction Review</h1>
         </div>
