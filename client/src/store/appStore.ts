@@ -10,7 +10,7 @@ import {
   Toast
 } from '../types';
 
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+export const API_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 const api = axios.create({ baseURL: API_URL });
 
 type Role = 'documentation_exec' | 'cs_exec' | 'manager';
