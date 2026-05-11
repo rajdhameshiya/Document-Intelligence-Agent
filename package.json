@@ -2,6 +2,9 @@
   "name": "shipmnts-doc-agent",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm start --prefix client",
