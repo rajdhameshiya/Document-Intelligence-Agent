@@ -14,10 +14,25 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const configuredOrigins = (process.env.CLIENT_URL || process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        configuredOrigins.length === 0 ||
+        configuredOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin === 'http://localhost:3000'
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
   })
