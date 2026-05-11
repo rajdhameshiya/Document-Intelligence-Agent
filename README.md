@@ -38,3 +38,17 @@
 - Falls back to sample document text if extraction fails or no API key is present.
 - Data is stored in `/data/*.json`; reset those files to `[]` to reseed on the next server start.
 - The client dependency tree uses `react-scripts`, so npm may need `--legacy-peer-deps`.
+
+## Deploying on Vercel
+
+This repository includes `vercel.json` so Vercel can build and serve the React app from `client/build`.
+
+For the frontend-only deployment:
+
+- Framework preset: Other
+- Build command: `npm install --prefix client --legacy-peer-deps && npm run build --prefix client`
+- Output directory: `client/build`
+
+The Express backend is not a long-running server on Vercel. For full API functionality, deploy the backend on Render/Railway and set this Vercel environment variable:
+
+`REACT_APP_API_URL=https://your-backend-url`
