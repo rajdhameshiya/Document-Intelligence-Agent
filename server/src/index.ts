@@ -8,6 +8,7 @@ import { dashboardRouter } from './routes/dashboard';
 import { documentsRouter } from './routes/documents';
 import { exceptionsRouter } from './routes/exceptions';
 import { shipmentsRouter } from './routes/shipments';
+import { telegramRouter } from './routes/telegram';
 import { seedData } from './utils/seed';
 
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/shipments', shipmentsRouter);
 app.use('/api/exceptions', exceptionsRouter);
 app.use('/api/audit', auditRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/webhooks/telegram', telegramRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });

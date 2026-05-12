@@ -1,24 +1,17 @@
 import express from 'express';
-import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuid } from 'uuid';
 import { FreightDocument } from '../types';
 import { fail, getErrorMessage, ok } from '../utils/api';
-import {
-  createAuditEvent,
-  getDocument,
-  getDocuments,
-  getShipment,
-  getShipmentByReference,
-  saveDocument
-} from '../utils/dataLayer';
+import { createAuditEvent, getDocument, getDocuments, getShipment, saveDocument } from '../utils/dataLayer';
 import { processDocument, resolveDocumentField } from '../services/documentProcessor';
+import { ingestDocument } from '../services/documentIngestion';
+import { ensureUploadDir, UPLOAD_DIR } from '../utils/uploads';
 
 export const documentsRouter = express.Router();
 
-const UPLOAD_DIR = path.join(__dirname, '../../../uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+ensureUploadDir();
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -42,54 +35,14 @@ documentsRouter.post('/upload', upload.single('file'), (req, res) => {
   try {
     if (!req.file) return fail(res, 'DOCUMENT_UPLOAD_FAILED', 'No file was uploaded', 400);
 
-    const channel = (req.body.channel || 'upload') as FreightDocument['channel'];
-    const senderIdentity = req.body.senderIdentity || 'manual-upload';
-    const shipment =
-      (req.body.shipmentId && getShipment(req.body.shipmentId)) ||
-      (req.body.shipmentReference && getShipmentByReference(req.body.shipmentReference)) ||
-      null;
-
-    const existingDuplicate = getDocuments().find(
-      (document) => document.fileName === req.file?.originalname && document.senderIdentity === senderIdentity
-    );
-
-    const document: FreightDocument = {
-      id: uuid(),
-      shipmentId: shipment?.id || null,
-      type: 'unclassified',
-      status: existingDuplicate ? 'duplicate' : 'processing',
-      channel,
+    const document = ingestDocument({
+      channel: (req.body.channel || 'upload') as FreightDocument['channel'],
       fileName: req.file.originalname,
-      fileUrl: `/uploads/${req.file.filename}`,
-      senderIdentity,
-      receivedAt: new Date().toISOString(),
-      extractedFields: [],
-      extractionSummary: { totalFields: 0, extractedSuccessfully: 0, missingMandatory: 0, lowConfidence: 0, conflicts: 0 },
-      isDuplicate: Boolean(existingDuplicate),
-      duplicateOfDocumentId: existingDuplicate?.id
-    };
-
-    saveDocument(document);
-    createAuditEvent({
-      shipmentId: shipment?.id || null,
-      documentId: document.id,
-      eventType: 'document_received',
-      actor: 'Agent',
-      description: `Document received via ${channel} from ${senderIdentity}`
+      storedFileName: req.file.filename,
+      senderIdentity: req.body.senderIdentity || 'manual-upload',
+      shipmentId: req.body.shipmentId,
+      shipmentReference: req.body.shipmentReference
     });
-
-    if (!existingDuplicate) {
-      setTimeout(() => {
-        processDocument(document.id).catch((error) => {
-          const failed = getDocument(document.id);
-          if (failed) {
-            failed.status = 'failed';
-            failed.processingError = getErrorMessage(error);
-            saveDocument(failed);
-          }
-        });
-      }, 3000);
-    }
 
     return ok(res, document, 201);
   } catch (error) {

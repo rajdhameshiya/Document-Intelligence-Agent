@@ -65,7 +65,7 @@ export type DocumentType =
   | 'unclassified';
 
 export type DocumentStatus = 'pending' | 'processing' | 'processed' | 'flagged' | 'failed' | 'duplicate';
-export type Channel = 'email' | 'whatsapp' | 'upload';
+export type Channel = 'email' | 'whatsapp' | 'upload' | 'telegram';
 
 export interface ExtractedField {
   fieldName: string;

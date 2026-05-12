@@ -52,3 +52,32 @@ For the frontend-only deployment:
 The Express backend is not a long-running server on Vercel. For full API functionality, deploy the backend on Render/Railway and set this Vercel environment variable:
 
 `REACT_APP_API_URL=https://your-backend-url`
+
+## Telegram Bot Document Intake
+
+The backend exposes a Telegram webhook at:
+
+`https://your-backend-url/api/webhooks/telegram`
+
+Required backend environment variables:
+
+`TELEGRAM_BOT_TOKEN=your_botfather_token`
+`PUBLIC_API_URL=https://your-backend-url`
+
+Set the Telegram webhook:
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=$PUBLIC_API_URL/api/webhooks/telegram"
+```
+
+Verify the webhook:
+
+```bash
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getWebhookInfo"
+```
+
+Usage:
+
+1. Send a PDF, image, or document to your Telegram bot.
+2. Optional: include a shipment reference in the caption, e.g. `SHIP-2024-001`.
+3. The backend downloads the file, creates a document with channel `telegram`, and sends it through the same extraction queue.

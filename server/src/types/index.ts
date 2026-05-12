@@ -74,7 +74,7 @@ export type DocumentStatus =
   | 'failed'
   | 'duplicate';
 
-export type Channel = 'email' | 'whatsapp' | 'upload';
+export type Channel = 'email' | 'whatsapp' | 'upload' | 'telegram';
 
 export interface ExtractedField {
   fieldName: string;
