@@ -20,6 +20,7 @@ import {
   saveShipment
 } from '../utils/dataLayer';
 import { getSampleText } from '../utils/sampleDocuments';
+import { UPLOAD_DIR } from '../utils/uploads';
 
 type ExtractedValue = { value: string | number | null; confidence: number };
 type ExtractionMap = Record<string, ExtractedValue>;
@@ -86,14 +87,16 @@ export async function processDocument(documentId: string): Promise<FreightDocume
   saveDocument(document);
 
   try {
-    const uploadPath = document.fileUrl.startsWith('/uploads/')
-      ? document.fileUrl.replace('/uploads/', 'uploads/')
-      : document.fileUrl;
+    const uploadPath = resolveUploadPath(document.fileUrl);
     const mimeType = inferMimeType(document.fileName);
-    let text = fs.existsSync(uploadPath) ? await extractText(uploadPath, mimeType) : '';
-    const usedFallback = !text || text.trim().length < 50;
+    const hasStoredFile = fs.existsSync(uploadPath);
+    let text = hasStoredFile ? await extractText(uploadPath, mimeType) : '';
+    const usedFallback = !hasStoredFile;
+
     if (usedFallback) {
       text = getSampleText(document.fileName);
+    } else if (!text || text.trim().length < 30) {
+      throw new Error('Could not extract readable text from this file. Upload a text-based PDF or image with readable text.');
     }
 
     const classification = await classifyDocument(text);
@@ -423,6 +426,9 @@ async function extractFields(
   usedFallback: boolean,
   shipment: Shipment | null
 ): Promise<ExtractionMap> {
+  const openaiExtraction = await extractFieldsWithOpenAI(documentType, text);
+  if (openaiExtraction) return openaiExtraction;
+
   const lower = text.toLowerCase();
   if (documentType === 'booking_confirmation') {
     return {
@@ -486,6 +492,109 @@ async function extractFields(
   }
 
   return {};
+}
+
+async function extractFieldsWithOpenAI(documentType: DocumentType, text: string): Promise<ExtractionMap | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || apiKey === 'your_openai_api_key_here') return null;
+
+  try {
+    const client = new OpenAI({ apiKey });
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: `${getExtractionPrompt(documentType)}
+
+Return ONLY a JSON object. Each key must map to an object with:
+{ "value": "string, number, or null", "confidence": 0-100 }
+
+Document text:
+${text.slice(0, 12000)}`
+        }
+      ],
+      temperature: 0
+    });
+    const parsed = extractJSON(completion.choices[0]?.message?.content || '');
+    const normalized = normalizeOpenAIExtraction(documentType, parsed);
+    return Object.keys(normalized).length > 0 ? normalized : null;
+  } catch {
+    return null;
+  }
+}
+
+function getExtractionPrompt(documentType: DocumentType): string {
+  if (documentType === 'booking_confirmation') {
+    return `Extract these Booking Confirmation fields:
+bookingReferenceNumber, shippingLine, vesselName, voyageNumber, portOfLoading, portOfDischarge, containerType, containerCount, sailingDate, cutoffDate.`;
+  }
+
+  if (documentType === 'shipping_instruction') {
+    return `Extract these Shipping Instruction fields:
+shipperName, shipperAddress, consigneeName, consigneeAddress, notifyParty, portOfLoading, portOfDischarge, cargoDescription, hsCode, grossWeight, packageCount, packageType, freightTerms, marksAndNumbers, specialInstructions.`;
+  }
+
+  if (documentType === 'commercial_invoice') {
+    return `Extract these Commercial Invoice fields:
+invoiceNumber, invoiceDate, shipperName, consigneeName, hsCode, cargoDescription, invoiceValue, invoiceCurrency, incoterms, countryOfOrigin.`;
+  }
+
+  if (documentType === 'packing_list') {
+    return `Extract these Packing List fields:
+grossWeight, netWeight, packageCount, packageType, marksAndNumbers.`;
+  }
+
+  return 'Extract any freight forwarding document fields you can identify.';
+}
+
+function normalizeOpenAIExtraction(documentType: DocumentType, parsed: Record<string, any>): ExtractionMap {
+  const fieldAliases: Record<string, string> = {
+    totalValue: 'invoiceValue',
+    currency: 'invoiceCurrency',
+    totalGrossWeight: 'grossWeight',
+    totalNetWeight: 'netWeight',
+    totalPackages: 'packageCount'
+  };
+  const allowedFields = new Set([
+    ...MANDATORY_FIELDS[documentType],
+    'shipperAddress',
+    'consigneeAddress',
+    'notifyParty',
+    'packageType',
+    'marksAndNumbers',
+    'specialInstructions',
+    'netWeight',
+    'invoiceDate',
+    'hsCode',
+    'incoterms',
+    'countryOfOrigin'
+  ]);
+
+  const normalized: ExtractionMap = {};
+  for (const [rawFieldName, rawValue] of Object.entries(parsed)) {
+    const fieldName = fieldAliases[rawFieldName] || rawFieldName;
+    if (!allowedFields.has(fieldName)) continue;
+
+    const extracted = normalizeExtractedValue(rawValue);
+    normalized[fieldName] = extracted;
+  }
+
+  return normalized;
+}
+
+function normalizeExtractedValue(rawValue: any): ExtractedValue {
+  if (rawValue && typeof rawValue === 'object' && 'value' in rawValue) {
+    return {
+      value: normalizeScalar(rawValue.value),
+      confidence: clampConfidence(rawValue.confidence)
+    };
+  }
+
+  return {
+    value: normalizeScalar(rawValue),
+    confidence: rawValue === null || rawValue === undefined || rawValue === '' ? 0 : 80
+  };
 }
 
 function updateShipmentChecklist(shipmentId: string, documentType: DocumentType): void {
@@ -608,6 +717,29 @@ function coerceFieldValue(fieldName: string, valueToCoerce: unknown): string | n
     return Number(valueToCoerce);
   }
   return String(valueToCoerce);
+}
+
+function normalizeScalar(valueToNormalize: unknown): string | number | null {
+  if (valueToNormalize === undefined || valueToNormalize === null || valueToNormalize === '') return null;
+  if (typeof valueToNormalize === 'number') return valueToNormalize;
+  return String(valueToNormalize).trim();
+}
+
+function clampConfidence(confidence: unknown): number {
+  const parsed = Number(confidence);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, Math.round(parsed)));
+}
+
+function resolveUploadPath(fileUrl: string): string {
+  if (fileUrl.startsWith('/uploads/')) {
+    return pathJoinUpload(fileUrl.replace('/uploads/', ''));
+  }
+  return fileUrl;
+}
+
+function pathJoinUpload(fileName: string): string {
+  return `${UPLOAD_DIR}/${fileName}`;
 }
 
 function extractJSON(response: string): any {
