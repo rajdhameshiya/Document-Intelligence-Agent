@@ -33,6 +33,16 @@ export function FieldStatusRow({ field, onResolveConflict }: FieldStatusRowProps
           {field.status === 'conflict' && field.conflictValue && (
             <p className="mt-1 text-xs text-purple-700">TMS value: {field.conflictValue}</p>
           )}
+          {field.evidence && (
+            <p className="mt-2 max-w-3xl rounded bg-white/70 px-2 py-1 text-xs text-slate-600" title={field.evidence}>
+              Evidence: {field.evidence}
+            </p>
+          )}
+          {field.reasoning && (
+            <p className="mt-1 text-xs text-slate-500" title={field.reasoning}>
+              Reasoning: {field.reasoning}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-3">

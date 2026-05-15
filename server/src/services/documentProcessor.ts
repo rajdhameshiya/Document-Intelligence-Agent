@@ -22,7 +22,14 @@ import {
 import { getSampleText } from '../utils/sampleDocuments';
 import { UPLOAD_DIR } from '../utils/uploads';
 
-type ExtractedValue = { value: string | number | null; confidence: number };
+type ExtractedValue = {
+  value: string | number | null;
+  confidence: number;
+  evidence?: string;
+  reasoning?: string;
+  sourceLabel?: string;
+  normalizedFieldName?: string;
+};
 type ExtractionMap = Record<string, ExtractedValue>;
 
 const LOCKED_FIELDS = ['bookingReferenceNumber', 'containerType', 'containerCount'];
@@ -124,8 +131,8 @@ export async function processDocument(documentId: string): Promise<FreightDocume
 
     const shipment = document.shipmentId ? getShipment(document.shipmentId) : null;
     const extracted = await extractFields(document.type, text, usedFallback, shipment);
-    const fields = Object.entries(extracted).map(([fieldName, value]) =>
-      assignFieldStatus(fieldName, value, shipment?.[fieldName], MANDATORY_FIELDS[document.type].includes(fieldName))
+    const fields = Object.entries(extracted).map(([fieldName, extractedValue]) =>
+      assignFieldStatus(fieldName, extractedValue, shipment?.[fieldName], MANDATORY_FIELDS[document.type].includes(fieldName))
     );
 
     document.extractedFields = fields;
@@ -214,16 +221,24 @@ export function assignFieldStatus(
   existingShipmentValue: unknown,
   mandatory: boolean
 ): ExtractedField {
+  const base = {
+    fieldName,
+    normalizedFieldName: extracted.normalizedFieldName || fieldName,
+    evidence: extracted.evidence,
+    reasoning: extracted.reasoning,
+    sourceLabel: extracted.sourceLabel
+  };
+
   if (extracted.value === null || extracted.value === undefined || extracted.value === '') {
-    return { fieldName, value: null, confidence: 0, mandatory, status: mandatory ? 'missing' : 'missing' };
+    return { ...base, value: null, confidence: 0, mandatory, status: mandatory ? 'missing' : 'missing' };
   }
 
   if (extracted.confidence < 50 && extracted.value !== null) {
-    return { fieldName, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'illegible' };
+    return { ...base, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'illegible' };
   }
 
   if (extracted.confidence < 75) {
-    return { fieldName, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'low_confidence' };
+    return { ...base, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'low_confidence' };
   }
 
   if (
@@ -232,7 +247,7 @@ export function assignFieldStatus(
     !sameFieldValue(existingShipmentValue, extracted.value)
   ) {
     return {
-      fieldName,
+      ...base,
       value: extracted.value,
       confidence: extracted.confidence,
       mandatory,
@@ -241,7 +256,7 @@ export function assignFieldStatus(
     };
   }
 
-  return { fieldName, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'extracted' };
+  return { ...base, value: extracted.value, confidence: extracted.confidence, mandatory, status: 'extracted' };
 }
 
 export function generateExceptions(document: FreightDocument, shipmentId: string): FreightException[] {
@@ -505,10 +520,48 @@ async function extractFieldsWithOpenAI(documentType: DocumentType, text: string)
       messages: [
         {
           role: 'user',
-          content: `${getExtractionPrompt(documentType)}
+          content: `You are a senior freight forwarding documentation extraction agent.
+
+Extract data by meaning, not by exact label. Freight documents are inconsistent and may use abbreviations, misspellings, shorthand, tables, or no clear labels.
+
+Examples of equivalent labels:
+- bookingReferenceNumber: Booking Ref, Booking Ref No, Booking Reference, Bkn Reference, Bkn Referrance #, BKG No, Carrier Booking No, Reservation No
+- shipperName: Shipper, Exporter, Seller, Consignor, Sender
+- consigneeName: Consignee, Buyer, Importer, Receiver, Consigned To
+- portOfLoading: POL, Load Port, Port Loading, Origin Port
+- portOfDischarge: POD, Discharge Port, Destination Port, Final Port
+- vesselName: Vessel, Vessel Name, Mother Vessel, Ocean Vessel
+- voyageNumber: Voyage, Voy, Voyage No, Vsl/Voy
+- containerType: Cntr Type, Equipment, Eq Type, Container Size/Type
+- containerCount: No of Containers, Qty Cntr, Containers, Units
+- cargoDescription: Goods Description, Description of Goods, Commodity, Cargo
+- hsCode: HS Code, HSN, Harmonized Code, Tariff Code
+- grossWeight: Gross Wt, G.W., GW, Total Gross Weight
+- netWeight: Net Wt, N.W., NW, Total Net Weight
+- packageCount: Packages, No. of Packages, Pkgs, Total Packages
+- invoiceNumber: Invoice No, Inv No, Commercial Invoice No
+- invoiceValue: Total Value, Invoice Amount, FOB Value, CIF Value
+- invoiceCurrency: Currency, Curr, Ccy
+
+Rules:
+- Return normalized schema field names only, never source labels as keys.
+- Extract the value even if the source label is misspelled or abbreviated.
+- Include short evidence copied from the document text for every non-null value.
+- Include sourceLabel when a label or nearby heading was used.
+- Include reasoning explaining why the value maps to the normalized field.
+- If a field is absent or too ambiguous, return null with confidence 0-49.
+- Do not invent values. Use null when not present.
+
+${getExtractionPrompt(documentType)}
 
 Return ONLY a JSON object. Each key must map to an object with:
-{ "value": "string, number, or null", "confidence": 0-100 }
+{
+  "value": "string, number, or null",
+  "confidence": 0-100,
+  "sourceLabel": "exact or approximate source label, or null",
+  "evidence": "short source text snippet supporting the extraction, or null",
+  "reasoning": "brief reason this value maps to the normalized field"
+}
 
 Document text:
 ${text.slice(0, 12000)}`
@@ -526,23 +579,67 @@ ${text.slice(0, 12000)}`
 
 function getExtractionPrompt(documentType: DocumentType): string {
   if (documentType === 'booking_confirmation') {
-    return `Extract these Booking Confirmation fields:
-bookingReferenceNumber, shippingLine, vesselName, voyageNumber, portOfLoading, portOfDischarge, containerType, containerCount, sailingDate, cutoffDate.`;
+    return `Extract these Booking Confirmation fields exactly:
+{
+  "bookingReferenceNumber": {},
+  "shippingLine": {},
+  "vesselName": {},
+  "voyageNumber": {},
+  "portOfLoading": {},
+  "portOfDischarge": {},
+  "containerType": {},
+  "containerCount": {},
+  "sailingDate": {},
+  "cutoffDate": {}
+}`;
   }
 
   if (documentType === 'shipping_instruction') {
-    return `Extract these Shipping Instruction fields:
-shipperName, shipperAddress, consigneeName, consigneeAddress, notifyParty, portOfLoading, portOfDischarge, cargoDescription, hsCode, grossWeight, packageCount, packageType, freightTerms, marksAndNumbers, specialInstructions.`;
+    return `Extract these Shipping Instruction fields exactly:
+{
+  "shipperName": {},
+  "shipperAddress": {},
+  "consigneeName": {},
+  "consigneeAddress": {},
+  "notifyParty": {},
+  "portOfLoading": {},
+  "portOfDischarge": {},
+  "cargoDescription": {},
+  "hsCode": {},
+  "grossWeight": {},
+  "packageCount": {},
+  "packageType": {},
+  "freightTerms": {},
+  "marksAndNumbers": {},
+  "specialInstructions": {}
+}`;
   }
 
   if (documentType === 'commercial_invoice') {
-    return `Extract these Commercial Invoice fields:
-invoiceNumber, invoiceDate, shipperName, consigneeName, hsCode, cargoDescription, invoiceValue, invoiceCurrency, incoterms, countryOfOrigin.`;
+    return `Extract these Commercial Invoice fields exactly:
+{
+  "invoiceNumber": {},
+  "invoiceDate": {},
+  "shipperName": {},
+  "consigneeName": {},
+  "hsCode": {},
+  "cargoDescription": {},
+  "invoiceValue": {},
+  "invoiceCurrency": {},
+  "incoterms": {},
+  "countryOfOrigin": {}
+}`;
   }
 
   if (documentType === 'packing_list') {
-    return `Extract these Packing List fields:
-grossWeight, netWeight, packageCount, packageType, marksAndNumbers.`;
+    return `Extract these Packing List fields exactly:
+{
+  "grossWeight": {},
+  "netWeight": {},
+  "packageCount": {},
+  "packageType": {},
+  "marksAndNumbers": {}
+}`;
   }
 
   return 'Extract any freight forwarding document fields you can identify.';
@@ -577,7 +674,7 @@ function normalizeOpenAIExtraction(documentType: DocumentType, parsed: Record<st
     if (!allowedFields.has(fieldName)) continue;
 
     const extracted = normalizeExtractedValue(rawValue);
-    normalized[fieldName] = extracted;
+    normalized[fieldName] = { ...extracted, normalizedFieldName: fieldName };
   }
 
   return normalized;
@@ -587,7 +684,10 @@ function normalizeExtractedValue(rawValue: any): ExtractedValue {
   if (rawValue && typeof rawValue === 'object' && 'value' in rawValue) {
     return {
       value: normalizeScalar(rawValue.value),
-      confidence: clampConfidence(rawValue.confidence)
+      confidence: clampConfidence(rawValue.confidence),
+      evidence: normalizeOptionalString(rawValue.evidence),
+      reasoning: normalizeOptionalString(rawValue.reasoning),
+      sourceLabel: normalizeOptionalString(rawValue.sourceLabel)
     };
   }
 
@@ -722,6 +822,11 @@ function coerceFieldValue(fieldName: string, valueToCoerce: unknown): string | n
 function normalizeScalar(valueToNormalize: unknown): string | number | null {
   if (valueToNormalize === undefined || valueToNormalize === null || valueToNormalize === '') return null;
   if (typeof valueToNormalize === 'number') return valueToNormalize;
+  return String(valueToNormalize).trim();
+}
+
+function normalizeOptionalString(valueToNormalize: unknown): string | undefined {
+  if (valueToNormalize === undefined || valueToNormalize === null || valueToNormalize === '') return undefined;
   return String(valueToNormalize).trim();
 }
 

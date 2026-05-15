@@ -69,11 +69,15 @@ export type Channel = 'email' | 'whatsapp' | 'upload' | 'telegram';
 
 export interface ExtractedField {
   fieldName: string;
+  normalizedFieldName?: string;
   value: string | number | null;
   confidence: number;
   mandatory: boolean;
   status: 'extracted' | 'missing' | 'illegible' | 'low_confidence' | 'conflict';
   conflictValue?: string;
+  evidence?: string;
+  reasoning?: string;
+  sourceLabel?: string;
 }
 
 export interface FreightDocument {
